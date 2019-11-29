@@ -284,35 +284,5 @@ MODULE_AUTHOR("Le Phuong Nam <le.phuong.nam@styl.solutions>");
 MODULE_DESCRIPTION("Driver for chargers which report their online status through a GPIO");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:gpio-charger");
-MODULE_VERSION("0.0.97");
+MODULE_VERSION("1.0.0");
 
-/*
-//Directory: {android_build}/kernel/drivers/power/yf3_battery_charger.c
-
-//DEVICE TREE
-
-	usb_charger: charger-gpio {
-		compatible = "gpio-charger";
-		charger-type = "mains";
-		gpios = <&msm_gpio 0 1>;
-		interrupt-controller;
-		enable-battery-pin = <&msm_gpio 97 0>;
-	};	
-
-// Defconfig
-	# 7. add Charger YellowFin3
-	CONFIG_CHARGER_YELLOWFIN3=y
-
-//Kconfig
-
-config CHARGER_YELLOWFIN3
-	tristate "TI YellowFin3 battery charger support"
-	depends on GPIOLIB
-	help
-	  Say Y to enable support for the TI YellowFin3 battery charger.
-
-// Makefile
-
-	obj-$(CONFIG_CHARGER_YELLOWFIN3)   += yf3_battery_charger.o
-
-*/
