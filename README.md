@@ -47,6 +47,7 @@ obj-$(CONFIG_CHARGER_YELLOWFIN3)   += yf3_battery_charger.o
 ```
 cat /sys/class/power-supply/charger-gpio/online
 ```
+
 Result: plug-in <1>, plug-outout <0>.
 
 2. Check type of charger
@@ -55,6 +56,8 @@ Result: plug-in <1>, plug-outout <0>.
 cat /sys/class/power-supply/charger-gpio/type
 ```
 
+Result: Mains
+
 ### Power - Batterry
 
 1. Check status of plug-in charger
@@ -62,8 +65,8 @@ cat /sys/class/power-supply/charger-gpio/type
 ```
 cat /sys/class/power-supply/charger-battery/online
 ```
-Result: plug-in <1>, plug-outout <0>.
 
+Result: always plug-in <1>.
 
 2. Check type of charger
 
@@ -71,23 +74,28 @@ Result: plug-in <1>, plug-outout <0>.
 cat /sys/class/power-supply/charger-battery/type
 ```
 
+Result: Battery
 
-3. Check type of charger
-
-```
-cat /sys/class/power-supply/charger-battery/type
-```
-
-4. Check status of plug-in charger
+3. Check voltage of charger
 
 ```
-cat /sys/class/power-supply/charger-gpiobattery/online
-```
-Result: plug-in <1>, plug-outout <0>.
-
-5. Check type of charger
-
-```
-cat /sys/class/power-supply/charger-battery/type
+cat /sys/class/power-supply/charger-battery/voltage_now
 ```
 
+Result: 4200 (4.2V = 4200 mV)
+
+4. Check capacitive of charger
+
+```
+cat /sys/class/power-supply/charger-gpiobattery/capacitive
+```
+
+Result: 100 (100%)
+
+5. Check status of charging now
+
+```
+cat /sys/class/power-supply/charger-battery/charge_now
+```
+
+Result: 0 (no charging)
