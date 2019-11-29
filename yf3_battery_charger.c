@@ -11,6 +11,8 @@
 #include <linux/of_gpio.h>
 #include <linux/power/gpio-charger.h>
 
+#define GPIO_ENABLE 1008
+
 struct gpio_charger {
 	const struct gpio_charger_platform_data *pdata;
 	unsigned int irq;
@@ -18,6 +20,8 @@ struct gpio_charger {
 	struct power_supply charger;
 	struct power_supply battery;
 };
+
+unsigned enable_gpio;
 
 static irqreturn_t gpio_charger_irq(int irq, void *devid)
 {
@@ -39,7 +43,6 @@ static int gpio_charger_get_property(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
 		val->intval = (gpio_get_value(pdata->gpio)?0:1);
-		val->intval ^= pdata->gpio_active_low;
 		break;
 	default:	
 		return -EINVAL;
@@ -50,8 +53,6 @@ static int gpio_charger_get_property(struct power_supply *psy,
 static int battery_charger_get_property(struct power_supply *psy,
 		enum power_supply_property psp, union power_supply_propval *val)
 {
-	// struct gpio_charger *gpio_charger = container_of(psy, struct gpio_charger, battery);
-	// const struct gpio_charger_platform_data *pdata = gpio_charger->pdata;
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
 		val->intval = 1;
@@ -143,6 +144,10 @@ static int gpio_charger_probe(struct platform_device *pdev)
 	int ret;
 	int irq;
 
+	struct device_node *child = pdev->dev.of_node;
+	enable_gpio = of_get_named_gpio(child, "enable-battery-pin", 0);
+	gpio_direction_output(enable_gpio, 1);
+	
 	if (!pdata) {
 		pdata = gpio_charger_parse_dt(&pdev->dev);
 		if (IS_ERR(pdata)) {
@@ -227,10 +232,11 @@ static int gpio_charger_remove(struct platform_device *pdev)
 {
 	struct gpio_charger *gpio_charger = platform_get_drvdata(pdev);
 	if (gpio_charger->irq)
-		free_irq(gpio_charger->irq, &gpio_charger->charger);
+			free_irq(gpio_charger->irq, &gpio_charger->charger);
 	power_supply_unregister(&gpio_charger->charger);
 	gpio_free(gpio_charger->pdata->gpio);
 	platform_set_drvdata(pdev, NULL);
+	gpio_set_value(enable_gpio	, 0);
 	return 0;
 }
 
@@ -278,4 +284,35 @@ MODULE_AUTHOR("Le Phuong Nam <le.phuong.nam@styl.solutions>");
 MODULE_DESCRIPTION("Driver for chargers which report their online status through a GPIO");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:gpio-charger");
-MODULE_VERSION("1.0.0");
+MODULE_VERSION("0.0.97");
+
+/*
+//Directory: {android_build}/kernel/drivers/power/yf3_battery_charger.c
+
+//DEVICE TREE
+
+	usb_charger: charger-gpio {
+		compatible = "gpio-charger";
+		charger-type = "mains";
+		gpios = <&msm_gpio 0 1>;
+		interrupt-controller;
+		enable-battery-pin = <&msm_gpio 97 0>;
+	};	
+
+// Defconfig
+	# 7. add Charger YellowFin3
+	CONFIG_CHARGER_YELLOWFIN3=y
+
+//Kconfig
+
+config CHARGER_YELLOWFIN3
+	tristate "TI YellowFin3 battery charger support"
+	depends on GPIOLIB
+	help
+	  Say Y to enable support for the TI YellowFin3 battery charger.
+
+// Makefile
+
+	obj-$(CONFIG_CHARGER_YELLOWFIN3)   += yf3_battery_charger.o
+
+*/
