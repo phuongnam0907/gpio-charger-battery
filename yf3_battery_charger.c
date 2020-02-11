@@ -146,6 +146,10 @@ static int gpio_charger_probe(struct platform_device *pdev)
 
 	struct device_node *child = pdev->dev.of_node;
 	enable_gpio = of_get_named_gpio(child, "enable-battery-pin", 0);
+
+	ret = gpio_request(enable_gpio, "enable-battery-pin");
+	if (ret)
+		dev_err(&pdev->dev, "Failed to request gpio pin: %d\n", enable_gpio);
 	gpio_direction_output(enable_gpio, 1);
 	
 	if (!pdata) {
@@ -236,7 +240,8 @@ static int gpio_charger_remove(struct platform_device *pdev)
 	power_supply_unregister(&gpio_charger->charger);
 	gpio_free(gpio_charger->pdata->gpio);
 	platform_set_drvdata(pdev, NULL);
-	gpio_set_value(enable_gpio	, 0);
+	gpio_set_value(enable_gpio, 0);
+	gpio_free(enable_gpio);
 	return 0;
 }
 
@@ -285,4 +290,3 @@ MODULE_DESCRIPTION("Driver for chargers which report their online status through
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:gpio-charger");
 MODULE_VERSION("1.0.0");
-
