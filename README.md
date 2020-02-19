@@ -38,6 +38,16 @@ config CHARGER_YELLOWFIN3
 obj-$(CONFIG_CHARGER_YELLOWFIN3)   += yf3_battery_charger.o
 ```
 
+6. <b>init.target.rc</b>
+
+Direction: AOSP/device/qcom/msm8909/init.target.rc
+
+```
+on property:sys.boot_completed=1
+   # Turn on gpio97
+   write /sys/class/power_supply/charger-gpio/charge_now 1
+```
+
 ## How to get in Terminal
 
 ### Power - Mains
