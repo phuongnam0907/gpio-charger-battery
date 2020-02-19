@@ -119,7 +119,7 @@ static enum power_supply_property battery_charger_properties[] = {
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CHARGE_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
-    POWER_SUPPLY_PROP_VOLTAGE_NOW,
+    	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 };
 
 static struct gpio_charger_platform_data *gpio_charger_parse_dt(struct device *dev)
