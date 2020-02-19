@@ -35,6 +35,41 @@ static inline struct gpio_charger *psy_to_gpio_charger(struct power_supply *psy)
 	return container_of(psy, struct gpio_charger, charger);
 }
 
+static int gpio_charger_property_is_writeable(struct power_supply *psy,
+                        enum power_supply_property psp)
+{
+	int retVal = 0;
+    switch (psp) {
+    case POWER_SUPPLY_PROP_ONLINE:
+        retVal = 1;
+		break;
+    case POWER_SUPPLY_PROP_CHARGE_NOW:
+        retVal = 1;
+		break;
+    default:
+        break;
+    }
+    return retVal;
+}
+
+static int gpio_charger_set_property(struct power_supply *psy,
+                       enum power_supply_property psp,
+                       const union power_supply_propval *val)
+{
+    switch (psp) {
+    case POWER_SUPPLY_PROP_ONLINE:
+        break;
+    case POWER_SUPPLY_PROP_CHARGE_NOW:
+		if (val->intval > 1 || val->intval < 0) return -EINVAL;
+        gpio_set_value(enable_gpio, val->intval);
+        break;
+    default:
+        return -EPERM;
+    }
+
+    return 0;
+}
+
 static int gpio_charger_get_property(struct power_supply *psy,
 		enum power_supply_property psp, union power_supply_propval *val)
 {
@@ -43,6 +78,9 @@ static int gpio_charger_get_property(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
 		val->intval = (gpio_get_value(pdata->gpio)?0:1);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+		val->intval = gpio_get_value(enable_gpio);
 		break;
 	default:	
 		return -EINVAL;
@@ -74,6 +112,7 @@ static int battery_charger_get_property(struct power_supply *psy,
 
 static enum power_supply_property gpio_charger_properties[] = {
 	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_CHARGE_NOW,
 };
 
 static enum power_supply_property battery_charger_properties[] = {
@@ -150,7 +189,7 @@ static int gpio_charger_probe(struct platform_device *pdev)
 	ret = gpio_request(enable_gpio, "enable-battery-pin");
 	if (ret)
 		dev_err(&pdev->dev, "Failed to request gpio pin: %d\n", enable_gpio);
-	gpio_direction_output(enable_gpio, 1);
+	gpio_direction_output(enable_gpio, 0);
 	
 	if (!pdata) {
 		pdata = gpio_charger_parse_dt(&pdev->dev);
@@ -181,6 +220,8 @@ static int gpio_charger_probe(struct platform_device *pdev)
 	charger->get_property = gpio_charger_get_property;
 	charger->supplied_to = pdata->supplied_to;
 	charger->num_supplicants = pdata->num_supplicants;
+	charger->property_is_writeable = gpio_charger_property_is_writeable;
+	charger->set_property = gpio_charger_set_property;
 	ret = gpio_request(pdata->gpio, dev_name(&pdev->dev));
 
 	if (ret) {
